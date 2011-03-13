@@ -16,7 +16,9 @@ Flag small_base
 
 Library
   Build-Depends:
-                    base < 5 && >= 3
+                      base < 5 && >= 3
+                    , xmonad
+                    , containers
 
   GHC-Options:
                     -Wall
@@ -25,5 +27,5 @@ Library
                     src
 
   Exposed-Modules:
-                      M
+                      XMonad.Config.DescriptiveKeys
 
