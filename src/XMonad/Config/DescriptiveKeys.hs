@@ -1,4 +1,16 @@
-module XMonad.Config.DescriptiveKeys where
+module XMonad.Config.DescriptiveKeys
+(
+  Category(..)
+, Tag(..)
+, Tags
+, Description(..)
+, DescriptiveKey(..)
+, defaultDescriptiveKey
+, DescriptiveKeys
+, descriptiveKeys
+, wKeys
+, setDescriptiveKeys
+) where
 
 import qualified Data.Set as S
 import qualified Data.Map as M
