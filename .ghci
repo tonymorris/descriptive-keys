@@ -1,7 +1,7 @@
 :set -isrc
 :m + Test.QuickCheck
-:l M
-:m + M
+:l XMonad.Config.DescriptiveKeys
+:m + XMonad.Config.DescriptiveKeys
 :set prompt ">> "
 :set -Wall
 
