@@ -81,7 +81,8 @@ setDescriptiveKeys k l =
 
 data DescriptiveKeysPP =
   DescriptiveKeysPP {
-    categoryPP :: String -> String
+    header :: String
+  , categoryPP :: String -> String
   , descriptionPP :: String -> String
   , keyPP :: ButtonMask -> KeySym -> String
   , tagPP :: Tag -> String
@@ -90,13 +91,15 @@ data DescriptiveKeysPP =
   , categorySep :: String
   , noCategory :: String
   , noDescription :: String
+  , footer :: String
   }
 
 defaultDescriptiveKeysPP ::
   DescriptiveKeysPP
 defaultDescriptiveKeysPP =
   DescriptiveKeysPP {
-    categoryPP = id
+    header = ""
+  , categoryPP = id
   , descriptionPP = id
   , keyPP = \m s -> let pick n str = if n .&. complement m == 0 then str else ""
                         mk = concatMap (++"-") . filter (not . null) . map (uncurry pick) $
@@ -117,4 +120,5 @@ defaultDescriptiveKeysPP =
   , categorySep = "\n\n"
   , noCategory = "<Uncategorized>"
   , noDescription = "..."
+  , footer = ""
   }
