@@ -1,12 +1,12 @@
-Name:               Haskell-Package
+Name:               DescriptiveKeys
 Version:            0.0.1
 License:            BSD3
 License-File:       LICENSE
 Author:             Tony Morris <ʇǝu˙sıɹɹoɯʇ@ןןǝʞsɐɥ>
 Maintainer:         Tony Morris
-Synopsis:           A skeleton for creating haskell packages
+Synopsis:           A library for specifying xmonad key bindings with functionality.
 Category:           Development
-Description:        A skeleton for creating haskell packages
+Description:        A library for specifying xmonad key bindings with search and help functions.
 Homepage:           https://bitbucket.org/dibblego/haskell-package/
 Cabal-version:      >= 1.2
 Build-Type:         Simple
