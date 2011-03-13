@@ -10,6 +10,8 @@ module XMonad.Config.DescriptiveKeys
 , descriptiveKeys
 , wKeys
 , setDescriptiveKeys
+, DescriptiveKeysPP(..)
+, defaultDescriptiveKeysPP
 ) where
 
 import qualified Data.Set as S
@@ -75,3 +77,29 @@ setDescriptiveKeys ::
 setDescriptiveKeys k l =
   let rawKeys (DescriptiveKeys d) = F.foldl' (\p (DescriptiveKey m s a _ _ _) -> M.insert (m, s) a p) M.empty . d
   in l { keys = rawKeys k }
+
+data DescriptiveKeysPP =
+  DescriptiveKeysPP {
+    categoryPP :: String -> String
+  , descriptionPP :: String -> String
+  , keyPP :: ButtonMask -> KeySym -> String
+  , tagPP :: Tag -> String
+  , tagsSep :: String
+  , keySep :: String
+  , noCategory :: String
+  , noDescription :: String
+  }
+
+defaultDescriptiveKeysPP ::
+  DescriptiveKeysPP
+defaultDescriptiveKeysPP =
+  DescriptiveKeysPP {
+    categoryPP = id
+  , descriptionPP = id
+  , keyPP = undefined
+  , tagPP = \(Tag s) -> s
+  , tagsSep = ","
+  , keySep = "\n"
+  , noCategory = "<Uncategorized>"
+  , noDescription = "..."
+  }
