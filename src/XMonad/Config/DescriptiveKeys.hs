@@ -18,6 +18,7 @@ import qualified Data.Set as S
 import qualified Data.Map as M
 import qualified Data.Foldable as F
 import XMonad
+import Data.Bits
 
 newtype Category =
   Category (Maybe String)
@@ -86,6 +87,7 @@ data DescriptiveKeysPP =
   , tagPP :: Tag -> String
   , tagsSep :: String
   , keySep :: String
+  , categorySep :: String
   , noCategory :: String
   , noDescription :: String
   }
@@ -96,10 +98,23 @@ defaultDescriptiveKeysPP =
   DescriptiveKeysPP {
     categoryPP = id
   , descriptionPP = id
-  , keyPP = undefined
+  , keyPP = \m s -> let pick n str = if n .&. complement m == 0 then str else ""
+                        mk = concatMap (++"-") . filter (not . null) . map (uncurry pick) $
+                               [
+                                 (mod1Mask, "M1")
+                               , (mod2Mask, "M2")
+                               , (mod3Mask, "M3")
+                               , (mod4Mask, "M4")
+                               , (mod5Mask, "M5")
+                               , (controlMask, "Cntrl")
+                               , (shiftMask,"Shift")
+                               ]
+                   in mk ++ keysymToString s
+
   , tagPP = \(Tag s) -> s
   , tagsSep = ","
   , keySep = "\n"
+  , categorySep = "\n\n"
   , noCategory = "<Uncategorized>"
   , noDescription = "..."
   }
