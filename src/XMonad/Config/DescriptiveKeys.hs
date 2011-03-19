@@ -1,5 +1,4 @@
 module XMonad.Config.DescriptiveKeys
-{-
 (
   Tag(..)
 , Tags
@@ -18,7 +17,8 @@ module XMonad.Config.DescriptiveKeys
 , defaultDescriptiveKeysPP
 , DescribeKeys(..)
 , defaultDescribeKeys
-) -} where
+, describeTags
+) where
 
 import qualified Data.Set as S
 import qualified Data.Map as M
@@ -103,9 +103,10 @@ filterTags t z@(DescriptiveKeys k) =
     then z
     else DescriptiveKeys (\l -> filter (\(DescriptiveKey _ _ _ _ u) -> not (S.null (S.intersection t u))) $ k l)
 
-newtype DescriptiveKeysPP =
+data DescriptiveKeysPP =
   DescriptiveKeysPP {
     descriptiveKeysPP :: [DescriptiveKey] -> String
+  , searchText :: String
   }
 
 defaultDescriptiveKeysPP ::
@@ -126,7 +127,7 @@ defaultDescriptiveKeysPP =
                            space g = g ++ replicate (16 - length g) ' '
                        in space (mk ++ keysymToString s) ++ case d of
                                                               Description Nothing  -> ""
-                                                              Description (Just e) -> "    " ++ e))
+                                                              Description (Just e) -> "    " ++ e)) "Search key-bindings"
 
 newtype DescribeKeys =
   DescribeKeys {
