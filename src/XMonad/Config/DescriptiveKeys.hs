@@ -9,8 +9,14 @@ module XMonad.Config.DescriptiveKeys
 , descriptiveKeys
 , wKeys
 , setDescriptiveKeys
+, allTags
+, SearchTags(..)
+, defaultSearchTags
+, filterTags
 , DescriptiveKeysPP(..)
 , defaultDescriptiveKeysPP
+, DescribeKeys(..)
+, defaultDescribeKeys
 ) where
 
 import qualified Data.Set as S
@@ -70,26 +76,41 @@ setDescriptiveKeys k l =
   let rawKeys (DescriptiveKeys d) = F.foldl' (\p (DescriptiveKey m s a _ _) -> M.insert (m, s) a p) M.empty . d
   in l { keys = rawKeys k }
 
-data DescriptiveKeysPP =
+allTags ::
+  XConfig Layout
+  -> DescriptiveKeys
+  -> Tags
+allTags l (DescriptiveKeys k) =
+  S.unions (fmap tags (k l))
+
+newtype SearchTags =
+  SearchTags {
+    searchTag :: String -> Tags
+  }
+
+defaultSearchTags ::
+  SearchTags
+defaultSearchTags =
+  SearchTags (S.fromList . fmap Tag . words)
+
+filterTags ::
+  Tags
+  -> DescriptiveKeys
+  -> DescriptiveKeys
+filterTags t (DescriptiveKeys k) =
+  DescriptiveKeys (\l -> filter (\(DescriptiveKey _ _ _ _ u) -> not (S.null (S.intersection t u))) $ k l)
+
+newtype DescriptiveKeysPP =
   DescriptiveKeysPP {
-    header :: String
-  , descriptionPP :: String -> String
-  , keyPP :: ButtonMask -> KeySym -> String
-  , tagPP :: Tag -> String
-  , tagsSep :: String
-  , keySep :: String
-  , noDescription :: String
-  , footer :: String
+    descriptiveKeysPP :: [DescriptiveKey] -> String
   }
 
 defaultDescriptiveKeysPP ::
   DescriptiveKeysPP
 defaultDescriptiveKeysPP =
-  DescriptiveKeysPP {
-    header = ""
-  , descriptionPP = id
-  , keyPP = \m s -> let pick n str = if n .&. complement m == 0 then str else ""
-                        mk = concatMap (++"-") . filter (not . null) . map (uncurry pick) $
+  DescriptiveKeysPP (unlines . fmap (\(DescriptiveKey m s _ d _) ->
+                       let pick n str = if n .&. complement m == 0 then str else ""
+                           mk = concatMap (++"-") . filter (not . null) . map (uncurry pick) $
                                [
                                  (mod1Mask, "M1")
                                , (mod2Mask, "M2")
@@ -99,12 +120,17 @@ defaultDescriptiveKeysPP =
                                , (controlMask, "Cntrl")
                                , (shiftMask,"Shift")
                                ]
-                   in mk ++ keysymToString s
+                       in mk ++ keysymToString s ++ case d of
+                                                      Description Nothing  -> ""
+                                                      Description (Just e) -> "    " ++ e))
 
-  , tagPP = \(Tag s) -> s
-  , tagsSep = ","
-  , keySep = "\n"
-  , noDescription = "..."
-  , footer = ""
+newtype DescribeKeys =
+  DescribeKeys {
+    describeKeys :: [DescriptiveKey] -> X ()
   }
 
+defaultDescribeKeys ::
+  DescriptiveKeysPP
+  -> DescribeKeys
+defaultDescribeKeys pp =
+  DescribeKeys (\k -> spawn ("xmessage " ++ descriptiveKeysPP pp k))
