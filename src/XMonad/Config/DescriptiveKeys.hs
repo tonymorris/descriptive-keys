@@ -1,4 +1,5 @@
 module XMonad.Config.DescriptiveKeys
+{-
 (
   Tag(..)
 , Tags
@@ -17,7 +18,7 @@ module XMonad.Config.DescriptiveKeys
 , defaultDescriptiveKeysPP
 , DescribeKeys(..)
 , defaultDescribeKeys
-) where
+) -} where
 
 import qualified Data.Set as S
 import qualified Data.Map as M
@@ -85,7 +86,7 @@ allTags l (DescriptiveKeys k) =
 
 newtype SearchTags =
   SearchTags {
-    searchTag :: String -> Tags
+    searchTags :: String -> Tags
   }
 
 defaultSearchTags ::
@@ -97,8 +98,10 @@ filterTags ::
   Tags
   -> DescriptiveKeys
   -> DescriptiveKeys
-filterTags t (DescriptiveKeys k) =
-  DescriptiveKeys (\l -> filter (\(DescriptiveKey _ _ _ _ u) -> not (S.null (S.intersection t u))) $ k l)
+filterTags t z@(DescriptiveKeys k) =
+  if S.null t
+    then z
+    else DescriptiveKeys (\l -> filter (\(DescriptiveKey _ _ _ _ u) -> not (S.null (S.intersection t u))) $ k l)
 
 newtype DescriptiveKeysPP =
   DescriptiveKeysPP {
@@ -112,17 +115,18 @@ defaultDescriptiveKeysPP =
                        let pick n str = if n .&. complement m == 0 then str else ""
                            mk = concatMap (++"-") . filter (not . null) . map (uncurry pick) $
                                [
-                                 (mod1Mask, "M1")
-                               , (mod2Mask, "M2")
-                               , (mod3Mask, "M3")
-                               , (mod4Mask, "M4")
-                               , (mod5Mask, "M5")
-                               , (controlMask, "Cntrl")
-                               , (shiftMask,"Shift")
+                                 (mod1Mask, "mod")
+                               , (mod2Mask, "mod")
+                               , (mod3Mask, "mod")
+                               , (mod4Mask, "mod")
+                               , (mod5Mask, "mod")
+                               , (controlMask, "cntrl")
+                               , (shiftMask,"shift")
                                ]
-                       in mk ++ keysymToString s ++ case d of
-                                                      Description Nothing  -> ""
-                                                      Description (Just e) -> "    " ++ e))
+                           space g = g ++ replicate (16 - length g) ' '
+                       in space (mk ++ keysymToString s) ++ case d of
+                                                              Description Nothing  -> ""
+                                                              Description (Just e) -> "    " ++ e))
 
 newtype DescribeKeys =
   DescribeKeys {
@@ -133,4 +137,15 @@ defaultDescribeKeys ::
   DescriptiveKeysPP
   -> DescribeKeys
 defaultDescribeKeys pp =
-  DescribeKeys (\k -> spawn ("xmessage " ++ descriptiveKeysPP pp k))
+  DescribeKeys (\k -> spawn ("xmessage \"" ++ descriptiveKeysPP pp k ++ "\""))
+
+describeTags ::
+  SearchTags
+  -> DescribeKeys
+  -> DescriptiveKeys
+  -> XConfig Layout
+  -> String
+  -> X ()
+describeTags (SearchTags s) (DescribeKeys k) d l e =
+  let DescriptiveKeys y = filterTags (s e) d
+  in k (y l)
