@@ -15,16 +15,22 @@ module XMonad.Config.DescriptiveKeys
 , filterTags
 , DescriptiveKeysPP(..)
 , defaultDescriptiveKeysPP
+, SearchTextPrompt(..)
+, defaultSearchTextPrompt
 , DescribeKeys(..)
 , defaultDescribeKeys
-, describeTags
+, HelpPromptConfig(..)
+, helpPrompt
 ) where
 
 import qualified Data.Set as S
 import qualified Data.Map as M
 import qualified Data.Foldable as F
 import XMonad
+import XMonad.Prompt
+import XMonad.Prompt.Input
 import Data.Bits
+import Data.List
 
 newtype Tag =
   Tag String
@@ -104,10 +110,7 @@ filterTags t z@(DescriptiveKeys k) =
     else DescriptiveKeys (\l -> filter (\(DescriptiveKey _ _ _ _ u) -> not (S.null (S.intersection t u))) $ k l)
 
 data DescriptiveKeysPP =
-  DescriptiveKeysPP {
-    descriptiveKeysPP :: [DescriptiveKey] -> String
-  , searchText :: String
-  }
+  DescriptiveKeysPP ([DescriptiveKey] -> String)
 
 defaultDescriptiveKeysPP ::
   DescriptiveKeysPP
@@ -116,37 +119,60 @@ defaultDescriptiveKeysPP =
                        let pick n str = if n .&. complement m == 0 then str else ""
                            mk = concatMap (++"-") . filter (not . null) . map (uncurry pick) $
                                [
-                                 (mod1Mask, "mod")
-                               , (mod2Mask, "mod")
-                               , (mod3Mask, "mod")
-                               , (mod4Mask, "mod")
-                               , (mod5Mask, "mod")
+                                 (mod1Mask,    "mod")
+                               , (mod2Mask,    "mod")
+                               , (mod3Mask,    "mod")
+                               , (mod4Mask,    "mod")
+                               , (mod5Mask,    "mod")
                                , (controlMask, "cntrl")
-                               , (shiftMask,"shift")
+                               , (shiftMask,   "shift")
                                ]
                            space g = g ++ replicate (16 - length g) ' '
                        in space (mk ++ keysymToString s) ++ case d of
                                                               Description Nothing  -> ""
-                                                              Description (Just e) -> "    " ++ e)) "Search key-bindings"
+                                                              Description (Just e) -> "    " ++ e))
+
+newtype SearchTextPrompt =
+  SearchTextPrompt String
+  deriving (Eq, Ord, Show)
+
+defaultSearchTextPrompt ::
+  SearchTextPrompt
+defaultSearchTextPrompt =
+  SearchTextPrompt "Search key-bindings"
 
 newtype DescribeKeys =
   DescribeKeys {
-    describeKeys :: [DescriptiveKey] -> X ()
+    describeKeys :: String -> X ()
   }
 
 defaultDescribeKeys ::
-  DescriptiveKeysPP
-  -> DescribeKeys
-defaultDescribeKeys pp =
-  DescribeKeys (\k -> spawn ("xmessage \"" ++ descriptiveKeysPP pp k ++ "\""))
-
-describeTags ::
-  SearchTags
-  -> DescribeKeys
-  -> DescriptiveKeys
+  DescriptiveKeys
   -> XConfig Layout
-  -> String
-  -> X ()
-describeTags (SearchTags s) (DescribeKeys k) d l e =
-  let DescriptiveKeys y = filterTags (s e) d
-  in k (y l)
+  -> DescribeKeys
+defaultDescribeKeys k l =
+  let dk (DescriptiveKeys g) = g
+      pp (DescriptiveKeysPP p) = p
+      j s = dk (filterTags (searchTags defaultSearchTags s) k) l
+  in DescribeKeys (\z -> spawn ("xmessage \"" ++ pp defaultDescriptiveKeysPP (j z) ++ "\""))
+
+data HelpPromptConfig =
+  HelpPromptConfig {
+    descriptiveHelp :: DescriptiveKeys
+  , xpConfigHelp    :: XPConfig
+  , keyHelp         :: (ButtonMask, KeySym)
+  , searchTextHelp  :: SearchTextPrompt
+  , describeHelp    :: DescribeKeys
+  }
+
+helpPrompt ::
+  (XConfig Layout -> HelpPromptConfig)
+  -> XConfig l
+  -> XConfig l
+helpPrompt f c =
+  c {
+    keys = \d -> let HelpPromptConfig ks xpc ms (SearchTextPrompt stp) (DescribeKeys describek) = f d
+                     compl s = return $ filter (isPrefixOf s) . fmap (\(Tag t) -> t) $ S.toList (allTags d ks)
+                 in M.insert ms (inputPromptWithCompl xpc stp compl ?+ describek) (keys c d)
+   }
+
