@@ -21,6 +21,8 @@ module XMonad.Config.DescriptiveKeys
 , defaultDescribeKeys
 , HelpPromptConfig(..)
 , helpPrompt
+, helpPromptAndSet
+, defaultHelpPromptAndSet
 ) where
 
 import qualified Data.Set as S
@@ -176,3 +178,28 @@ helpPrompt f c =
                  in M.insert ms (inputPromptWithCompl xpc stp compl ?+ describek) (keys c d)
    }
 
+helpPromptAndSet ::
+  DescriptiveKeys
+  -> XPConfig
+  -> (ButtonMask, KeySym)
+  -> SearchTextPrompt
+  -> (XConfig Layout -> DescribeKeys)
+  -> XConfig l
+  -> XConfig l
+helpPromptAndSet k c m s d =
+  helpPrompt (\l -> HelpPromptConfig {
+    descriptiveHelp = k
+  , xpConfigHelp    = c
+  , keyHelp         = m
+  , searchTextHelp  = s
+  , describeHelp    = d l
+  }) .
+  setDescriptiveKeys k
+
+defaultHelpPromptAndSet ::
+  DescriptiveKeys
+  -> XPConfig
+  -> XConfig l
+  -> XConfig l
+defaultHelpPromptAndSet k c =
+  helpPromptAndSet k c (mod4Mask, xK_F1) defaultSearchTextPrompt (defaultDescribeKeys k)
