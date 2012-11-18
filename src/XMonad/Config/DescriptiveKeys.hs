@@ -165,7 +165,7 @@ defaultDescriptiveKeysPP =
                        let pick n str = if n .&. complement m == 0 then str else ""
                            mk = concatMap (++"-") . filter (not . null) . map (uncurry pick) $
                                [
-                                 (mod1Mask,    "mod")
+                                 (mod1Mask,    "alt")
                                , (mod2Mask,    "mod")
                                , (mod3Mask,    "mod")
                                , (mod4Mask,    "mod")
